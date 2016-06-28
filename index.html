@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>parametric surface</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px;
+				width: 100%;
+				padding-left: 160px;
+				margin-left: 160px;
+				text-align: left;
+			}	
+
+			#pulldownmenu {
+				position: absolute;
+				top: 20px;
+				width: 160px;
+				padding: 5px;
+				text-align: left;
+			}	
+
+			</style>
+	</head>
+	<body>
+	<div id="info">Variety of Parametric Surface (2016 Jun Mitani)<br>
+	Thanks to <a href="http://www.3d-meier.de/tut3/Seite0.html" target="_blank">Parametrische Flächen und Körper</a></div>
+
+	<div id="pulldownmenu">
+	<form name="f">
+		<select name="model" size="20" onChange="modelChange()">
+		<option value="0" selected>0 Sphere</option>
+		<option value="1">1 Bohemian Dome</option>
+		<option value="2">2 Boy Surface</option>
+		<option value="6">6 Enneper Surface</option>
+		<option value="8">8 Klein Bottle</option>
+		<option value="9">9 Möbius Band</option>
+		<option value="13">13 Seashell</option>
+		<option value="16">16 Sine Surface</option>		
+		<option value="18">18 Whitney Umbrella</option>
+		<option value="20">20 Helicoid</option>		
+		<option value="22">22 Hyperbolic Helicoid</option>		
+		<option value="27">27 Pseudosphere</option>
+		<option value="33">33 Scherk Surface</option>		
+		<option value="35">35 Cosine Surface</option>
+		<option value="36">36 Ellipsoid</option>
+		<option value="42">42 Pillow Shape</option>		
+		<option value="44">44 Horn</option>		
+		<option value="53">53 Tranguloid Trefoil</option>
+		<option value="54">54 Torus</option>
+		<option value="55">55 Antisymmetric Torus</option>
+		</select>
+	</form>
+	</div>
+
+		<script src="three.min.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+
+		<script>
+		    var UV_DIV_NUM = 64;
+		    var container;
+		    var camera, scene, renderer;
+
+		    var group;
+
+		    var targetRotation = 0;
+		    var targetRotationOnMouseDown = 0;
+
+	  		var modelIndex = 1;
+
+		    var windowHalfX = window.innerWidth / 2;
+		    var windowHalfY = window.innerHeight / 2;
+			var material;
+			var linecolor = 0x303080;
+
+   		    init();
+		    animate();
+
+		    function getPositionUV(u, v) {
+		    	var idx = document.f.model.selectedIndex;
+				var modelIndex = document.f.model.options[idx].value;
+
+				// Bohemian Dome
+		    	if(modelIndex == 1) {
+		    		u = u * 2 * Math.PI;
+		    		v = v * 2 * Math.PI;
+
+					var a = 8.0; var b = 5.0; var c = 3.0;
+		    		var x = a*Math.cos(u);
+		    		var y = b*Math.cos(v) + a*Math.sin(u);
+		    		var z = c*Math.sin(v);
+			   		var scale = 15;
+		        	return new THREE.Vector3(y * scale, x * scale, z * scale);
+		    	}
+
+				// Boy Surface
+			   	if(modelIndex == 2) {
+		       		u = (u - 0.5)* Math.PI;
+		    		v = v * Math.PI;
+
+		    		var a = Math.sqrt(2);
+		    		var b = 2 - a * Math.sin(3*u) *Math.sin(2*v);
+
+		    		var x = a * Math.cos(v) * Math.cos(v) *Math.cos(2*u) +Math.cos(u) *Math.sin(2*v)/b;
+		    		var y = 3 * Math.cos(v) * Math.cos(v)/b;
+		    		var z = a * Math.cos(v) * Math.cos(v) *Math.sin(2*u) + Math.cos(u) *Math.sin(2*v)/b;
+			   		var scale = 60;
+		        	return new THREE.Vector3(y * scale, x * scale, z * scale);
+		    	}
+
+		    	// Enneper Surface
+		    	if(modelIndex == 6){
+			        u = 4 * (u - 0.5);
+			        v = 4 * (v - 0.5);
+			        var x = u - ((u * u * u / 3) + u * v * v);
+		    	    var y = v - ((v*v*v/3) + u*u* v);
+		        	var z = u*u-v*v;
+			   		var scale = 15;
+		        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    	}
+
+		    	// Klein Bottle
+		    	if(modelIndex == 8){
+		       		u = 2 * u * Math.PI;
+		    		v = 2 * v * Math.PI;
+	
+					var r = 4 * (1 - Math.cos(u)/2);
+
+					var a = 5;
+					var b = 14;
+			   		var scale = 10;
+					if( u < Math.PI) {	
+			    		var x = a * Math.cos(u) * (1 + Math.sin(u)) + r *Math.cos(u) *Math.cos(v);
+			    		var y = b * Math.sin(u) + r * Math.sin(u) * Math.cos(v);
+		    			var z = r * Math.sin(v);
+			        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+					} else {
+			    		var x = a * Math.cos(u) * (1 + Math.sin(u)) + r *Math.cos(v + Math.PI);
+			    		var y = b * Math.sin(u);
+		    			var z = r * Math.sin(v);
+			        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+
+					}
+		    	}
+
+				// Möbius Band
+		    	if(modelIndex == 9){
+		       		var s = 1.5 * ( u - 0.5 );
+		    		var t = 2 * v * Math.PI;
+	
+					var R = 2; var r = 1.5;
+
+		    		var x = (R + s * Math.cos(t/2)) * Math.cos(t);
+		    		var y = (R + s * Math.cos(t/2)) * Math.sin(t);
+		    		var z = s * Math.sin(t/2);
+			   		var scale = 50;
+		        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    	}
+
+		    	// Seashell
+		    	if(modelIndex == 13){
+		       		u = 6 * u * Math.PI;
+		    		v = 2 * v * Math.PI;
+	
+					var h = Math.pow(Math.E, u/(6 * Math.PI));
+
+		    		var x = 2 * (1 - h) * Math.cos(u) * Math.cos(0.5 *v) * Math.cos(0.5 *v);
+		    		var y = 1 - Math.pow(Math.E, u/(3 * Math.PI)) - Math.sin(v) + h *Math.sin(v);
+		    		var z = 2 *(-1 + h) *Math.sin(u) *Math.cos(0.5 *v) *Math.cos(0.5 *v);
+			   		var scale = 30;
+		        	return new THREE.Vector3(x * scale, y * scale + 100, z * scale);
+		    	}
+
+		    	// Sine Surface
+		    	if(modelIndex == 16) {
+	                u = 2 * (u - 0.5) * Math.PI;
+    	            v = 2 * (v - 0.5) * Math.PI;
+
+        	        var x = Math.sin(u);
+            	    var y = Math.sin(v);
+                	var z = Math.sin(u+v);
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+
+		    	// Whitney Umbrella
+		    	if(modelIndex == 18){
+		       		u = 3 * (u -0.5);
+		    		v = 3 * (v -0.5);
+	
+		    		var x = u * v;
+		    		var y = u;
+		    		var z = v * v - 3;
+			   		var scale = 80;
+		        	return new THREE.Vector3(x * scale, z * scale + 100, y * scale);
+		    	}
+
+		    	// Helicoid
+		    	if(modelIndex == 20) {
+	                u = 4 * (u - 0.5);
+    	            v = v * 2 * Math.PI;
+					var c = 1;
+					
+        	        var x = u * Math.cos(v);
+            	    var y = u * Math.sin(v);
+                	var z = c * (v - Math.PI);
+			   		var scale = 50;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+				// Hyperbolic Helicoid
+				if(modelIndex == 22) {
+	                u = - 8 * (u - 0.5);
+    	            v = - 8 * (v - 0.5);
+					var a = 2.5;
+        	        var x = Math.sinh(v) * Math.cos( a * u)/(1+ Math.cosh(u)* Math.cosh(v))
+            	    var y = Math.sinh(v) * Math.sin( a * u)/(1+Math.cosh(u) *Math.cosh(v))
+                	var z = Math.cosh(v) * Math.sinh(u)/(1+Math.cosh(u) *Math.cosh(v))
+			   		var scale = 140;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+		    	// Pseudosphere
+		    	if(modelIndex == 27) {
+	                u = 2 * (u - 0.5) * Math.PI;
+    	            v = (1-v) * 0.1 + v*3.05;
+
+        	        var x = Math.cos(u) * Math.sin(v);
+            	    var y = Math.sin(u) * Math.sin(v);
+                	var z = Math.cos(v) + Math.log(Math.tan(v/2));
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+		    	// Scherk Surface
+		    	if(modelIndex == 33) {
+	                u = 2 * (u - 0.5) * Math.PI;
+    	            v = 2 * (v - 0.5) * Math.PI;
+					var c = 0.45;
+        	        var x = u;
+            	    var y = v;
+                	var z = Math.log(Math.cos(c * u)/ Math.cos(c * v))/c;
+			   		var scale = 50;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+		    	// Cosine Surface
+		    	if(modelIndex == 35) {
+	                u = 2 * (u - 0.5) * Math.PI;
+    	            v = 2 * (v - 0.5) * Math.PI;
+
+        	        var x = Math.cos(u);
+            	    var y = Math.cos(v);
+                	var z = Math.cos(u+v);
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+		    	// Ellipsoid
+		    	if(modelIndex == 36) {
+	                u = 2 * u * Math.PI;
+    	            v = 2 * v * Math.PI;
+
+					var a = 1.5; var b = 2.5; var c = 3;
+        	        var x = a * Math.cos(u) * Math.sin(v);
+            	    var y = b * Math.sin(u) * Math.sin(v);
+                	var z = c * Math.cos(v);
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+		    	// Pillow Shape
+		    	if(modelIndex == 42) {
+	                u = u * Math.PI;
+    	            v = 2 * (v - 0.5) * Math.PI;
+
+        	        var a = 0.5;
+        	        var x = Math.cos(u);
+            	    var y = Math.cos(v);
+                	var z = a * Math.sin(u) * Math.sin(v);
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    	}
+
+		    	// Horn
+		    	if(modelIndex == 44) {
+    	            v = 2 * (v - 0.5) * Math.PI;
+
+        	        var a = 0.8; var b = 1.9; var c = 1;
+        	        var x = (a + u * Math.cos(v)) * Math.sin(b * Math.PI * u);
+            	    var y = (a + u * Math.cos(v)) *Math.cos(b *Math.PI * u) + c * u;
+                	var z = u * Math.sin(v);
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    	}
+
+		    	// Tranguloid Trefoil
+		    	if(modelIndex == 53) {
+	                u = 2 * (u - 0.5) * Math.PI;
+    	            v = 2 * (v - 0.5) * Math.PI;
+        	        var x = 2 * Math.sin(3 * u) / (2 + Math.cos(v));
+            	    var y = 2 * (Math.sin(u) + 2 * Math.sin(2*u))/(2+Math.cos(v + 2 * Math.PI /3));
+                	var z = (Math.cos(u) - 2 *Math.cos(2 *u))* (2 + Math.cos(v))* (2 + Math.cos(v + 2 * Math.PI/3))/4;
+		        	return new THREE.Vector3( x * 30, y * 30, z * 30);
+		    	}
+
+		    	// Torus
+		    	if(modelIndex == 54) {
+	                u = 2 * u * Math.PI;
+    	            v = 2 * v * Math.PI;
+    	            var R = 5; var r = 3;
+        	        var x = (R + r * Math.cos(v)) * Math.cos(u);
+            	    var y = (R + r * Math.cos(v)) * Math.sin(u);
+                	var z = r * Math.sin(v);
+			   		var scale = 20;
+		        	return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    	}
+
+		    	// Antisymmetric Torus
+		    	if(modelIndex == 55) {
+	                u = u * 2 * Math.PI;
+    	            v = v * 2 * Math.PI;
+    	            var R = 2; var r  = 0.5; var a = 1;
+    	        
+        	        var x = (R + r *Math.cos(v) * (a + Math.sin(u))) *Math.cos(u);
+            	    var y = (R + r *Math.cos(v) * (a + Math.sin(u))) *Math.sin(u);
+                	var z =  r * Math.sin(v) * (a + Math.sin(u));
+			   		var scale = 60;
+		        	return new THREE.Vector3(x * scale, z * scale, y * scale);
+		    	}
+
+				// sphere
+				u = u * 2 * Math.PI;
+				v = (v - 0.5) * Math.PI;
+		        var x = Math.cos(v) * Math.cos(u);
+		        var z = Math.cos(v) * Math.sin(u);
+		        var y = Math.sin(v);
+		   		var scale = 100;
+	    	    return new THREE.Vector3(x * scale, y * scale, z * scale);
+		    }
+
+
+		    function init() {
+
+		        container = document.createElement('div');
+		        document.body.appendChild(container);
+
+				// scene
+		        scene = new THREE.Scene();
+
+				// camera
+		        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 10, 1000);
+		        camera.position.set(0, 0, 500);
+		        scene.add(camera);
+
+				// light
+		        var light = new THREE.PointLight(0xffffff, 0.8);
+		        camera.add(light);
+
+				// material
+	            material = new THREE.MeshPhongMaterial({
+	               	side: THREE.DoubleSide,                                 
+    	           	color: 0xd0d0f0, 
+        	       	ambient:0x990000,
+            	   	specular:0xffffff,
+               		shininess:5//,
+               		//metal:true 
+		      	});
+
+		 		material.polygonOffset = true;		
+		        material.depthTest = true;
+        		material.polygonOffsetFactor = 1;
+        		material.polygonOffsetUnits = 0.1;
+
+				// model
+		        buildModel();
+	        
+				// renderer
+		        renderer = new THREE.WebGLRenderer({ antialias: true });
+		        renderer.setClearColor(0xf0f0f0);
+		        renderer.setPixelRatio(window.devicePixelRatio);
+		        renderer.setSize(window.innerWidth, window.innerHeight);
+		        container.appendChild(renderer.domElement);
+
+		        // Controls
+		        controls = new THREE.TrackballControls(camera, renderer.domElement);  
+				controls.rotateSpeed = 10.0; //回転させるときの速さ
+
+				// event
+		        window.addEventListener('resize', onWindowResize, false);
+		    }
+
+			function buildModel() {
+				if(group != null) { scene.remove(group); }
+ 		        group = new THREE.Group();
+		        scene.add(group);
+
+/*		        var loader = new THREE.TextureLoader();
+		        var texture = loader.load("textures/UV_Grid_Sm.jpg");
+		        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		        texture.repeat.set(0.008, 0.008);
+	            var material = new THREE.MeshPhongMaterial({ side: THREE.DoubleSide , map: texture, color: 0xaaaaaa });
+	            */
+
+
+	            var geometry = new THREE.Geometry();
+
+				//var uvs = [];
+	            for (var iv = 0; iv <= UV_DIV_NUM; iv++) {
+	                var line_geom = new THREE.Geometry();
+	                for (var iu = 0; iu <= UV_DIV_NUM; iu++) {
+	                    geometry.vertices.push(getPositionUV(iu / UV_DIV_NUM, iv / UV_DIV_NUM));
+	                    line_geom.vertices.push(getPositionUV(iu / UV_DIV_NUM, iv / UV_DIV_NUM));
+                       // uvs.push(new THREE.UV(iu / UV_DIV_NUM, iv / UV_DIV_NUM));
+	                }
+	                group.add(new THREE.Line(line_geom, new THREE.LineBasicMaterial({ color: linecolor, linewidth: 1 })));
+	            }
+
+	            for (var iv = 0; iv <= UV_DIV_NUM; iv++) {
+	                var line_geom = new THREE.Geometry();
+	                for (var iu = 0; iu <= UV_DIV_NUM; iu++) {
+	                    line_geom.vertices.push(getPositionUV(iv / UV_DIV_NUM, iu / UV_DIV_NUM));
+	                }
+	                group.add(new THREE.Line(line_geom, new THREE.LineBasicMaterial({ color: linecolor, linewidth: 1 })));
+	            }
+
+	            for (var iv = 0; iv < UV_DIV_NUM; iv++) {
+	                for (var iu = 0; iu < UV_DIV_NUM; iu++) {
+	                    var face0 = new THREE.Face3(iv * (UV_DIV_NUM + 1) + iu, iv * (UV_DIV_NUM + 1) + iu + 1, (iv + 1) * (UV_DIV_NUM+1) + iu);
+	                    var face1 = new THREE.Face3(iv * (UV_DIV_NUM + 1) + iu + 1, (iv + 1) * (UV_DIV_NUM + 1) + iu + 1, (iv + 1) * (UV_DIV_NUM + 1) + iu);
+	                    geometry.faces.push(face0);
+	                    geometry.faces.push(face1);
+//   							geometry.faceVertexUvs[0].push(
+ //     						[uvs[iv * (UV_DIV_NUM + 1) + iu], uvs[iv * (UV_DIV_NUM + 1) + iu + 1], uvs[(iv + 1) * (UV_DIV_NUM+1) + iu]],
+ //     						[uvs[iv * (UV_DIV_NUM + 1) + iu + 1], uvs[ (iv + 1) * (UV_DIV_NUM + 1) + iu + 1], uvs[(iv + 1) * (UV_DIV_NUM + 1) + iu]]);
+
+
+
+		            }
+		         }
+
+		        geometry.computeFaceNormals();
+		        var mesh = new THREE.Mesh(geometry, material);
+		        group.add(mesh);
+			}
+
+
+		    function onWindowResize() {
+		        windowHalfX = window.innerWidth / 2;
+		        windowHalfY = window.innerHeight / 2;
+		        camera.aspect = window.innerWidth / window.innerHeight;
+		        camera.updateProjectionMatrix();
+		        renderer.setSize(window.innerWidth, window.innerHeight);
+		    }
+
+		    function onDocumentMouseDown(event) {
+		        event.preventDefault();
+		        document.addEventListener('mousemove', onDocumentMouseMove, false);
+		        document.addEventListener('mouseup', onDocumentMouseUp, false);
+		        document.addEventListener('mouseout', onDocumentMouseOut, false);
+		        mouseXOnMouseDown = event.clientX - windowHalfX;
+		        targetRotationOnMouseDown = targetRotation;
+
+		    }
+
+		    function onDocumentMouseMove(event) {
+		        mouseX = event.clientX - windowHalfX;
+		        targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02;
+
+		    }
+
+		    function onDocumentMouseUp(event) {
+		        document.removeEventListener('mousemove', onDocumentMouseMove, false);
+		        document.removeEventListener('mouseup', onDocumentMouseUp, false);
+		        document.removeEventListener('mouseout', onDocumentMouseOut, false);
+
+		    }
+
+		    function onDocumentMouseOut(event) {
+
+		        document.removeEventListener('mousemove', onDocumentMouseMove, false);
+		        document.removeEventListener('mouseup', onDocumentMouseUp, false);
+		        document.removeEventListener('mouseout', onDocumentMouseOut, false);
+
+		    }
+
+		    function onDocumentTouchStart(event) {
+		        if (event.touches.length == 1) {
+		            event.preventDefault();
+		            mouseXOnMouseDown = event.touches[0].pageX - windowHalfX;
+		            targetRotationOnMouseDown = targetRotation;
+		        }
+		    }
+
+		    function onDocumentTouchMove(event) {
+		        if (event.touches.length == 1) {
+		            event.preventDefault();
+		            mouseX = event.touches[0].pageX - windowHalfX;
+		            targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.05;
+		        }
+		    }
+		    function animate() {
+		        requestAnimationFrame(animate);
+		        render();
+		    }
+
+		    function render() {
+				controls.update();   
+		        group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
+		        renderer.render(scene, camera);
+		    }
+
+			function modelChange(){
+				controls.reset();
+				buildModel();
+				render();
+			}
+
+		</script>
+
+	</body>
+</html>
